@@ -2,7 +2,9 @@ from scapy.all import rdpcap
 from scapy.contrib.gtp import GTP_U_Header
 from scapy.all import IP, UDP
 
-pkts = rdpcap("n3_userplane.pcap")
+import os
+pcap_f = "data/n3_userplane.pcap" if os.path.exists("data/n3_userplane.pcap") else "n3_userplane.pcap"
+pkts = rdpcap(pcap_f)
 
 # Group packets by flow
 flows = {}
