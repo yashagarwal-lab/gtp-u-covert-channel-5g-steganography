@@ -72,11 +72,11 @@ Candidate modulation fields:
 - IP Time-to-Live (TTL) (8 bits)
 - UDP Length field (16 bits, bytes 24..25 from start of inner IP)
 
-Because small packet size variations ($0..15$ bytes) are easily absorbed by application buffers as ordinary padding, modulating the least significant nibble of the **UDP Length** header ($L_{\text{UDP}}$) yields an ideal covert carrier:
+Because small packet size variations (0 to 15 bytes) are easily absorbed by application buffers as ordinary padding, modulating the least significant nibble of the **UDP Length** header ($L_{\mathrm{UDP}}$) yields an ideal covert carrier:
 
 $$\text{Carrier Byte} = \text{Header}[25]$$
 
-$$\text{Nibble}_{\text{low}}(k) = \text{Header}_k[25] \mathbin{\&} \text{0x0F}$$
+$$\text{Nibble}_{\mathrm{low}}(k) = \text{Header}_k[25] \wedge \text{0x0F}$$
 
 ### 3.3 Channel Capacity & Self-Synchronizing Protocol
 
@@ -86,11 +86,11 @@ $$\mathcal{C} = 4\,\text{bits/packet} = 0.5\,\text{bytes/packet}$$
 
 For a message of length $M$ characters ($2M$ nibbles), transmission requires $2M$ packets. To overcome packet loss, out-of-order delivery, and arbitrary receiver capture start times, the transmitter implements a **self-synchronizing frame marker**:
 
-$$\text{Sync Marker} = \texttt{0xDEAD} = [13, 14, 10, 13]_{16}$$
+$$\text{Sync Marker} = \text{0xDEAD} = [13, 14, 10, 13]_{16}$$
 
 Upon detecting four consecutive nibbles matching `0xD, 0xE, 0xA, 0xD`, the demodulator establishes byte alignment. Subsequent nibbles are combined pairwise into ASCII octets:
 
-$$\text{Byte}_j = (\text{Nibble}_{2j} \ll 4) \mid \text{Nibble}_{2j+1}$$
+$$B_j = (N_{2j} \ll 4) \vee N_{2j+1}$$
 
 ---
 
@@ -103,10 +103,10 @@ $$\text{Byte}_j = (\text{Nibble}_{2j} \ll 4) \mid \text{Nibble}_{2j+1}$$
    - Skip 8-byte GTP-U header to expose inner IP packet.
 2. **Flow Demultiplexing**:
    - Extract inner IP Source, Destination, and UDP Destination Port.
-   - Group packets into discrete communication flows: $\mathcal{F}_{\text{key}} = (\text{IP}_{\text{src}}, \text{IP}_{\text{dst}}, \text{Port}_{\text{dst}})$.
+   - Group packets into discrete communication flows: `flow_key = (src_ip, dst_ip, dst_port)`.
 3. **Multi-Field Nibble Extraction**:
    - For each flow, extract the 28-byte combined inner header (20 IP + 8 UDP).
-   - For every byte position $i \in [0, 27]$, compile the sequence of high nibbles ($b \gg 4$) and low nibbles ($b \mathbin{\&} \text{0x0F}$).
+   - For every byte position $i \in [0, 27]$, compile the sequence of high nibbles (`b >> 4`) and low nibbles (`b & 0x0F`).
 4. **Preamble Acquisition**:
    - Search nibble strings for the hex pattern `dead`.
    - Locate the exact carrier: byte index 25 (lower byte of inner UDP Length), low-nibble position.
